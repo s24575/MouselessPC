@@ -8,15 +8,44 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsView, QHBoxLayout,
     QLabel, QListView, QPushButton, QSizePolicy,
     QVBoxLayout, QWidget)
+import numpy as np
+import cv2
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+
+class VideoThread(QThread):
+    change_pixmap_signal = Signal(np.ndarray)
+
+    def run(self):
+        cap = cv2.VideoCapture(0)
+        while True:
+            ret, cv_imag = cap.read()
+            if ret:
+                self.change_pixmap_signal.emit(cv_imag)
+
 
 class Ui_mainFrame(object):
     def setupUi(self, mainFrame):
         if not mainFrame.objectName():
             mainFrame.setObjectName(u"mainFrame")
         mainFrame.resize(738, 539)
-        self.webcamView = QGraphicsView(mainFrame)
-        self.webcamView.setObjectName(u"webcamView")
-        self.webcamView.setGeometry(QRect(30, 30, 431, 361))
+        # self.webcamView = QGraphicsView(mainFrame)
+        # self.webcamView.setObjectName(u"webcamView")
+        # self.webcamView.setGeometry(QRect(30, 30, 431, 361))
+        # set webcam view
+        self.image_label = QLabel(mainFrame)
+        self.text_label = QLabel('Webcam')
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.image_label)
+        vbox.addWidget(self.text_label)
+        self.vbox = vbox
+        self.vbox.setGeometry(QRect(30, 30, 400, 350))
+
+        self.thread = VideoThread()
+        self.thread.change_pixmap_signal.connect(self.update_image)
+        self.thread.start()
+        #
+
         self.settings = QPushButton(mainFrame)
         self.settings.setObjectName(u"settings")
         self.settings.setGeometry(QRect(20, 500, 80, 24))
@@ -103,3 +132,19 @@ class Ui_mainFrame(object):
         self.label_2.setText(QCoreApplication.translate("mainFrame", u"Logs", None))
     # retranslateUi
 
+    @Slot(np.ndarray)
+    def update_image(self, cv_img):
+        qt_image = self.convert_cv_qt(cv_img)
+        self.image_label.setPixmap(qt_image)
+
+    def convert_cv_qt(self, cv_image):
+        rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
+        h, w, c = rgb_image.shape
+        bytes_per_line = c * w
+        convert_to_Qt_format = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
+        p = convert_to_Qt_format.scaled(400, 350)
+        return QPixmap.fromImage(p)
+
+    def closeEvent(self, event):
+        self.thread.stop()
+        event.accept()
