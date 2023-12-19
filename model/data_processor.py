@@ -2,15 +2,18 @@ import kaggle
 import os
 from PIL import Image
 
+
 def download():
     # https://www.kaggle.com/datasets/gti-upm/leapgestrecog
     print("Downloading dataset...")
     kaggle.api.authenticate()
     kaggle.api.dataset_download_files('gti-upm/leapgestrecog', path='./model/data/', unzip=True)
 
+
 def show(filepath: str):
     image = Image.open(filepath)
     image.show()
+
 
 if __name__ == '__main__':
     data_path = "./model/data"
