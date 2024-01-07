@@ -23,20 +23,39 @@ class HandGestureImageCollector:
         SAVE = "s"
         QUIT = "q"
 
-    def __init__(self):
-        self.camera = Camera()
-        self.detector = HandDetector(maxHands=1)
+    def __init__(self, img_size: int):
+        self._img_size = img_size
+        self._camera = Camera()
+        self._detector = HandDetector(maxHands=1)
 
     def __del__(self):
         cv2.destroyAllWindows()
-    
+     
+    def collect_image(self):
+        print(f"Press {self.KeyAction.SAVE.value} to save the displayed image")
+        while True:
+            collect = False
+            key = cv2.waitKey(1)
+            if key == ord(self.KeyAction.QUIT.value):
+                return None
+            elif key == ord(self.KeyAction.SAVE.value):
+                collect = True
+            
+            img, hand_img, _ = self.get_image(self._img_size)
+            if img is not None:
+                cv2.imshow("Image", img)
+            if hand_img is not None:
+                cv2.imshow("Image modified", hand_img)
+                if collect:
+                    return hand_img
+
     def get_image(self, img_size: int, flip_img=True) -> Optional[Tuple[Any, Any]]:
         img, img_white, normalized_position = None, None, None
-        success, img = self.camera.get_current_image()
+        success, img = self._camera.get_current_image()
         if success:
             if flip_img:
                 img = cv2.flip(img, 1)
-            hands, img = self.detector.findHands(img)
+            hands, img = self._detector.findHands(img)
             if hands:
                 img_white, normalized_position = self.get_hand_image(hands, img, img_size)
 
@@ -56,7 +75,7 @@ class HandGestureImageCollector:
         img_height, img_width, _ = img.shape
         hand = hands[0]
         x, y, w, h = hand['bbox']
-        x1, x2, y1, y2 = HandGestureImageCollector.get_hand_bbox_coordinates(x, y, w, h, img_height, img_width, padding)
+        x1, x2, y1, y2 = HandGestureImageCollector.get_hand_bbox_coordinates(x, y, w, h, img_width, img_height, padding)
         crop_width, crop_height = x2 - x1, y2 - y1
 
         if crop_width > 0 and crop_height > 0:
