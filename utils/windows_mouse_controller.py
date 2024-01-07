@@ -12,7 +12,7 @@ class WindowsMouseController:
         DOUBLE_CLICK = 4
 
     def __init__(self):
-        self.hand_gesture_image_collector = HandGestureImageCollector()
+        pass
 
     def move_to_coordinates(self, x, y):
         pyautogui.moveTo(x, y)
@@ -30,7 +30,6 @@ class WindowsMouseController:
         pyautogui.rightClick()
 
     def drag_to(self, x, y, duration: int = 0):
-        print(f"drag to {x},{y}")
         pyautogui.dragTo(x, y, duration=duration)
     
     def move_by(self, x, y, duration: int = 0):
@@ -38,14 +37,17 @@ class WindowsMouseController:
         pyautogui.moveRel(x, y, duration=duration)
     
     def activate(self, model, img_size: int):
+        image_collector = HandGestureImageCollector(img_size)
         screen_width, screen_height = pyautogui.size()
         last_gesture = None
         while True:
-            if cv2.waitKey(1) == ord("q"):
+            key = cv2.waitKey(1)
+            if key == ord("q"):
                 break
-            img, img_white, normalized_position = self.hand_gesture_image_collector.get_image(img_size)
+            img, img_white, normalized_position = image_collector.get_image(img_size)
             if img_white is not None:
-                prediction, label = model.predict(img_white)
+                prediction, chance = model.predict(img_white)
+                label = "{}: {:0.2f}%".format(prediction, chance * 100)
 
                 cv2.putText(img, label, (25, 25), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
@@ -53,12 +55,10 @@ class WindowsMouseController:
                 self.drag_to(x, y)
 
                 if last_gesture != prediction:
-                    if prediction == 'a':
+                    if prediction == 'b':
                         self.click()
-                    elif prediction == 'b':
-                        self.right_click()
                     elif prediction == 'c':
-                        self.double_click()
+                        self.right_click()
                 
                 last_gesture = prediction
             if img is not None:
