@@ -13,19 +13,19 @@ def main():
     gesture_manager.add_gesture("b")
     gesture_manager.add_gesture("c")
 
+    model = Model(gesture_manager.hand_gestures, IMG_SIZE)
+
     if COLLECT_IMAGES:
         status = gesture_manager.collect_gesture_images(SAMPLES, IMG_SIZE)
 
         if status is False:
             print("Collecting images was cancelled, exiting...")
             return
-    
-    model = Model(gesture_manager.hand_gestures, IMG_SIZE)
-    
-    if COLLECT_IMAGES:
+        
         model.train()
-    
-    model.load_from_file()
+        model.save_to_file()
+    else:
+        model.load_from_file()
     
     mouse_controller = WindowsMouseController()
     mouse_controller.activate(model, IMG_SIZE)

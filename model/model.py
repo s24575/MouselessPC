@@ -16,13 +16,18 @@ from tensorflow.keras import layers, models
 
 
 class Model:
+    MODEL_PATH = "model/data"
+
     def __init__(self, hand_gestures: List[HandGesture], img_size: int):
         self.hand_gestures = [x.name for x in hand_gestures]
         self.img_size = img_size
         self.model = None
 
     def load_from_file(self):
-        self.model = tf.keras.models.load_model('model/data/model')
+        self.model = tf.keras.models.load_model(self.MODEL_PATH)
+
+    def save_to_file(self):
+        self.model.save(self.MODEL_PATH)
 
     def train(self):
         # Define your data paths
@@ -114,7 +119,5 @@ class Model:
         predicted_chance = np.max(predictions)
         predicted_class = np.argmax(predictions)
         predicted_gesture = self.hand_gestures[predicted_class]
-        label = f"{predicted_gesture}: {round(predicted_chance, 2)}%"
 
-
-        return predicted_gesture, label
+        return predicted_gesture, predicted_chance
