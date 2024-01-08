@@ -7,16 +7,17 @@ from PySide6.QtGui import *
 from PySide6.QtCore import *
 
 from desktop_app.log_thread import LogThread
-from desktop_app.ui_settings import Ui_settings
+from desktop_app.uisettings import UiSettings
 from desktop_app.video_thread import VideoThread
 
-class Ui_main_frame(QMainWindow):
+
+class UiMainFrame(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setupUi()
+        self.setup_ui()
         self.settings_window = None
 
-    def setupUi(self):
+    def setup_ui(self):
         if not self.objectName():
             self.setObjectName(u"main_frame")
         self.setWindowModality(Qt.ApplicationModal)
@@ -70,13 +71,13 @@ class Ui_main_frame(QMainWindow):
         self.processing_label.setObjectName(u"processing_label")
         self.processing_label.setGeometry(QRect(280, 340, 171, 16))
 
-        self.retranslateUi(self)
+        self.retranslate_ui(self)
 
         QMetaObject.connectSlotsByName(self)
 
     # setupUi
 
-    def retranslateUi(self, main_frame):
+    def retranslate_ui(self, main_frame):
         main_frame.setWindowTitle(QCoreApplication.translate("main_frame", u"Widget", None))
         self.settings.setText(QCoreApplication.translate("main_frame", u"Settings", None))
         self.acions_log.setText(QCoreApplication.translate("main_frame", u"Actions Log", None))
@@ -108,7 +109,7 @@ class Ui_main_frame(QMainWindow):
 
     def display_settings(self):
         if self.settings_window is None:
-            self.settings_window = Ui_settings(self)
+            self.settings_window = UiSettings(self)
         self.settings_window.show()
         self.hide()
 

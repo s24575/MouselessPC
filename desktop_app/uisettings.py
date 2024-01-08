@@ -1,11 +1,11 @@
-from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsView, QHBoxLayout,
                                QLabel, QListView, QPushButton, QSizePolicy,
                                QVBoxLayout, QWidget, QComboBox, QFormLayout, QDialog)
 from PySide6.QtGui import *
 from PySide6.QtCore import *
 
-class Ui_settings(QWidget):
+
+class UiSettings(QWidget):
     def __init__(self, parent=None):
         super().__init__()
 
@@ -113,11 +113,11 @@ class Ui_settings(QWidget):
         self.cancel_btn.clicked.connect(self.cancel_clicked)
         layout.addWidget(self.cancel_btn)
 
-        self.retranslateUi()
+        self.retranslate_ui()
         self.setLayout(layout)
     # setupUi
 
-    def retranslateUi(self):
+    def retranslate_ui(self):
         self.title.setText(QCoreApplication.translate("settings", u"Settings", None))
         self.source_label.setText(QCoreApplication.translate("settings", u"Video source", None))
         self.webcam.setText(QCoreApplication.translate("settings", u"Webcam", None))
@@ -131,7 +131,6 @@ class Ui_settings(QWidget):
         self.default_btn.setText(QCoreApplication.translate("settings", u"Default", None))
         self.cancel_btn.setText(QCoreApplication.translate("settings", u"Cancel", None))
     # retranslateUi
-
 
     def submit_clicked(self):
         print("Submit button clicked")
