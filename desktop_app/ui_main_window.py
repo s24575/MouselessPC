@@ -1,7 +1,3 @@
-import time
-
-import keyboard
-import pyautogui
 from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsView, QHBoxLayout,
                                QLabel, QListView, QPushButton, QSizePolicy,
                                QVBoxLayout, QWidget, QMainWindow, QListWidget)
@@ -10,19 +6,9 @@ import cv2
 from PySide6.QtGui import *
 from PySide6.QtCore import *
 
+from desktop_app.log_thread import LogThread
 from desktop_app.ui_settings import Ui_settings
-
-
-class VideoThread(QThread):
-    change_pixmap_signal = Signal(np.ndarray)
-
-    def run(self):
-        cap = cv2.VideoCapture(0)
-        while True:
-            ret, cv_imag = cap.read()
-            if ret:
-                self.change_pixmap_signal.emit(cv_imag)
-
+from desktop_app.video_thread import VideoThread
 
 class Ui_main_frame(QMainWindow):
     def __init__(self):
@@ -138,41 +124,3 @@ class Ui_main_frame(QMainWindow):
     def stop_clicked(self):
         self.log_thread.is_stop_time = True
         self.log_thread.exit()
-
-
-class GestureService:
-
-    # Class create as mock.
-    # In future will be replaced or rebuild
-    def __init__(self):
-        self.gestures = {'up': 1, 'down': 2, 'left': 3, 'right': 4}
-
-    def process_gestures(self, signal):
-        mouse_speed = 30
-        response = self.gestures.get(signal)
-        match response:
-            case 1:
-                pyautogui.moveRel(0, -mouse_speed)
-            case 2:
-                pyautogui.moveRel(0, mouse_speed)
-            case 3:
-                pyautogui.moveRel(-mouse_speed, 0)
-            case 4:
-                pyautogui.moveRel(mouse_speed, 0)
-
-
-class LogThread(QThread):
-    model_controller = GestureService()
-    gesture = Signal(str)
-    is_stop_time = False
-
-    def run(self):
-        while True:
-            if self.is_stop_time:
-                break
-            time.sleep(0.1)
-            key = keyboard.read_key()
-
-            # Adjust during integration
-            self.model_controller.process_gestures(key)
-            self.gesture.emit(key)
