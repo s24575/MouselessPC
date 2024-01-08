@@ -1,5 +1,3 @@
-import sys
-
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsView, QHBoxLayout,
                                QLabel, QListView, QPushButton, QSizePolicy,
@@ -10,7 +8,8 @@ from PySide6.QtCore import *
 class Ui_settings(QWidget):
     def __init__(self, parent=None):
         super().__init__()
-        # self.setParent(parent)
+
+        self.parent_window = parent
         layout = QVBoxLayout()
         self.title = QLabel("settings")
         self.title.setObjectName(u"title")
@@ -36,13 +35,13 @@ class Ui_settings(QWidget):
 
         self.source_container.addWidget(self.webcam)
 
-        self.pushButton_2 = QPushButton(self.horizontalLayoutWidget)
-        self.pushButton_2.setObjectName(u"pushButton_2")
-        self.pushButton_2.setEnabled(False)
+        self.smartphone = QPushButton(self.horizontalLayoutWidget)
+        self.smartphone.setObjectName(u"smartphone")
+        self.smartphone.setEnabled(False)
 
         layout.addWidget(self.horizontalLayoutWidget)
 
-        self.source_container.addWidget(self.pushButton_2)
+        self.source_container.addWidget(self.smartphone)
 
         self.gesture_label = QLabel()
         self.gesture_label.setObjectName(u"gesture_label")
@@ -98,18 +97,21 @@ class Ui_settings(QWidget):
 
         self.gestures_container.setWidget(3, QFormLayout.FieldRole, self.comboBox_4)
 
-        self.pushButton = QPushButton()
-        self.pushButton.setObjectName(u"pushButton")
-        self.pushButton.setGeometry(QRect(200, 350, 80, 24))
-        layout.addWidget(self.pushButton)
-        self.pushButton_3 = QPushButton()
-        self.pushButton_3.setObjectName(u"pushButton_3")
-        self.pushButton_3.setGeometry(QRect(110, 350, 80, 24))
-        layout.addWidget(self.pushButton_3)
-        self.pushButton_4 = QPushButton()
-        self.pushButton_4.setObjectName(u"pushButton_4")
-        self.pushButton_4.setGeometry(QRect(0, 350, 80, 24))
-        layout.addWidget(self.pushButton_4)
+        self.submit_btn = QPushButton()
+        self.submit_btn.setObjectName(u"submit_btn")
+        self.submit_btn.setGeometry(QRect(200, 350, 80, 24))
+        self.submit_btn.clicked.connect(self.submit_clicked)
+        layout.addWidget(self.submit_btn)
+        self.default_btn = QPushButton()
+        self.default_btn.setObjectName(u"default_btn")
+        self.default_btn.setGeometry(QRect(110, 350, 80, 24))
+        self.default_btn.clicked.connect(self.default_clicked)
+        layout.addWidget(self.default_btn)
+        self.cancel_btn = QPushButton()
+        self.cancel_btn.setObjectName(u"cancel_btn")
+        self.cancel_btn.setGeometry(QRect(0, 350, 80, 24))
+        self.cancel_btn.clicked.connect(self.cancel_clicked)
+        layout.addWidget(self.cancel_btn)
 
         self.retranslateUi()
         self.setLayout(layout)
@@ -119,23 +121,30 @@ class Ui_settings(QWidget):
         self.title.setText(QCoreApplication.translate("settings", u"Settings", None))
         self.source_label.setText(QCoreApplication.translate("settings", u"Video source", None))
         self.webcam.setText(QCoreApplication.translate("settings", u"Webcam", None))
-        self.pushButton_2.setText(QCoreApplication.translate("settings", u"Smartphone", None))
+        self.smartphone.setText(QCoreApplication.translate("settings", u"Smartphone", None))
         self.gesture_label.setText(QCoreApplication.translate("settings", u"Gestures", None))
         self.label_2.setText(QCoreApplication.translate("settings", u"TextLabel", None))
         self.label_3.setText(QCoreApplication.translate("settings", u"TextLabel", None))
         self.label_4.setText(QCoreApplication.translate("settings", u"TextLabel", None))
         self.label_5.setText(QCoreApplication.translate("settings", u"TextLabel", None))
-        self.pushButton.setText(QCoreApplication.translate("settings", u"Submit", None))
-        self.pushButton_3.setText(QCoreApplication.translate("settings", u"Default", None))
-        self.pushButton_4.setText(QCoreApplication.translate("settings", u"Cancel", None))
+        self.submit_btn.setText(QCoreApplication.translate("settings", u"Submit", None))
+        self.default_btn.setText(QCoreApplication.translate("settings", u"Default", None))
+        self.cancel_btn.setText(QCoreApplication.translate("settings", u"Cancel", None))
     # retranslateUi
 
 
     def submit_clicked(self):
         print("Submit button clicked")
+        self.show_main_window()
 
     def default_clicked(self):
         print("Default button clicked")
+        self.show_main_window()
 
     def cancel_clicked(self):
         print("Cancel button clicked")
+        self.show_main_window()
+
+    def show_main_window(self):
+        self.parent_window.show()
+        self.close()
