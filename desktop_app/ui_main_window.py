@@ -7,7 +7,7 @@ from PySide6.QtGui import *
 from PySide6.QtCore import *
 
 from desktop_app.log_thread import LogThread
-from desktop_app.uisettings import UiSettings
+from desktop_app.ui_settings import UiSettings
 from desktop_app.video_thread import VideoThread
 
 
