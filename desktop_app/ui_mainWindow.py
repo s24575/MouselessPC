@@ -1,3 +1,7 @@
+import time
+
+import keyboard
+import pyautogui
 from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsView, QHBoxLayout,
                                QLabel, QListView, QPushButton, QSizePolicy,
                                QVBoxLayout, QWidget, QMainWindow, QListWidget)
@@ -59,6 +63,10 @@ class Ui_main_frame(QMainWindow):
         self.list_view.setObjectName(u"list_view")
         self.list_view.setGeometry(QRect(550, 50, 180, 250))
 
+        self.log_thread = LogThread()
+        self.log_thread.gesture.connect(self.add_to_log)
+        self.log_thread.start()
+
         self.acions_log = QLabel(self)
         self.acions_log.setObjectName(u"acions_log")
         self.acions_log.setEnabled(True)
@@ -66,9 +74,11 @@ class Ui_main_frame(QMainWindow):
         self.start = QPushButton(self)
         self.start.setObjectName(u"start")
         self.start.setGeometry(QRect(250, 370, 107, 24))
+        self.start.clicked.connect(self.start_clicked)
         self.stop = QPushButton(self)
         self.stop.setObjectName(u"stop")
         self.stop.setGeometry(QRect(370, 370, 101, 24))
+        self.stop.clicked.connect(self.stop_clicked)
 
         self.processing_label = QLabel(self)
         self.processing_label.setObjectName(u"processing_label")
@@ -77,6 +87,7 @@ class Ui_main_frame(QMainWindow):
         self.retranslateUi(self)
 
         QMetaObject.connectSlotsByName(self)
+
     # setupUi
 
     def retranslateUi(self, main_frame):
@@ -86,6 +97,7 @@ class Ui_main_frame(QMainWindow):
         self.start.setText(QCoreApplication.translate("main_frame", u"Start", None))
         self.stop.setText(QCoreApplication.translate("main_frame", u"Stop", None))
         self.processing_label.setText(QCoreApplication.translate("main_frame", u"Start/Stope gesture processing", None))
+
     # retranslateUi
 
     @Slot(np.ndarray)
@@ -97,13 +109,15 @@ class Ui_main_frame(QMainWindow):
         rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
         h, w, c = rgb_image.shape
         bytes_per_line = c * w
-        convert_to_Qt_format = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(480, 270)
+        convert_to_qt_format = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
+        p = convert_to_qt_format.scaled(480, 270)
         return QPixmap.fromImage(p)
 
     def closeEvent(self, event):
         self.video_thread.terminate()
+        QThread.wait(self.video_thread)
         self.log_thread.terminate()
+        QThread.wait(self.log_thread)
         event.accept()
 
     def display_settings(self):
@@ -111,3 +125,55 @@ class Ui_main_frame(QMainWindow):
             self.settings_window = Ui_settings(self)
         self.settings_window.show()
         self.hide()
+
+    @Slot(str)
+    def add_to_log(self, item):
+        self.list_view.insertItem(0, item)
+        self.list_view.scrollToTop()
+
+    def start_clicked(self):
+        self.log_thread.is_stop_time = False
+        self.log_thread.start()
+
+    def stop_clicked(self):
+        self.log_thread.is_stop_time = True
+        self.log_thread.exit()
+
+
+class GestureService:
+
+    # Class create as mock.
+    # In future will be replaced or rebuild
+    def __init__(self):
+        self.gestures = {'up': 1, 'down': 2, 'left': 3, 'right': 4}
+        self.model = ModelMock(self.gestures)
+
+    def process_gestures(self, signal):
+        mouse_speed = 30
+        response = self.gestures.get(signal)
+        match response:
+            case 1:
+                pyautogui.moveRel(0, -mouse_speed)
+            case 2:
+                pyautogui.moveRel(0, mouse_speed)
+            case 3:
+                pyautogui.moveRel(-mouse_speed, 0)
+            case 4:
+                pyautogui.moveRel(mouse_speed, 0)
+
+
+class LogThread(QThread):
+    model_controller = GestureService()
+    gesture = Signal(str)
+    is_stop_time = False
+
+    def run(self):
+        while True:
+            if self.is_stop_time:
+                break
+            time.sleep(0.1)
+            key = keyboard.read_key()
+
+            # Adjust during integration
+            self.model_controller.process_gestures(key)
+            self.gesture.emit(key)
