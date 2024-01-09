@@ -48,54 +48,58 @@ class UiSettings(QWidget):
         self.gesture_label.setGeometry(QRect(100, 140, 49, 16))
         layout.addWidget(self.gesture_label)
 
-        self.formLayoutWidget = QWidget()
-        self.formLayoutWidget.setObjectName(u"formLayoutWidget")
-        self.formLayoutWidget.setGeometry(QRect(50, 170, 171, 161))
-        self.gestures_container = QFormLayout(self.formLayoutWidget)
+        self.form_layout_widget = QWidget()
+        self.form_layout_widget.setObjectName(u"formLayoutWidget")
+        self.form_layout_widget.setGeometry(QRect(50, 170, 171, 161))
+        self.gestures_container = QFormLayout(self.form_layout_widget)
         self.gestures_container.setObjectName(u"gestures_container")
         self.gestures_container.setHorizontalSpacing(15)
         self.gestures_container.setContentsMargins(5, 0, 0, 0)
-        self.label_2 = QLabel(self.formLayoutWidget)
+        self.label_2 = QLabel(self.form_layout_widget)
         self.label_2.setObjectName(u"label_2")
 
         self.gestures_container.setWidget(0, QFormLayout.LabelRole, self.label_2)
 
-        self.label_3 = QLabel(self.formLayoutWidget)
+        self.label_3 = QLabel(self.form_layout_widget)
         self.label_3.setObjectName(u"label_3")
 
         self.gestures_container.setWidget(2, QFormLayout.LabelRole, self.label_3)
 
-        self.label_4 = QLabel(self.formLayoutWidget)
+        self.label_4 = QLabel(self.form_layout_widget)
         self.label_4.setObjectName(u"label_4")
 
         self.gestures_container.setWidget(1, QFormLayout.LabelRole, self.label_4)
 
-        self.label_5 = QLabel(self.formLayoutWidget)
+        self.label_5 = QLabel(self.form_layout_widget)
         self.label_5.setObjectName(u"label_5")
 
         self.gestures_container.setWidget(3, QFormLayout.LabelRole, self.label_5)
 
-        self.comboBox = QComboBox(self.formLayoutWidget)
-        self.comboBox.setObjectName(u"comboBox")
+        self.combo_box = QComboBox(self.form_layout_widget)
+        self.combo_box.setObjectName(u"comboBox")
+        self.combo_box.addItem('action 1')
 
-        self.gestures_container.setWidget(0, QFormLayout.FieldRole, self.comboBox)
+        self.gestures_container.setWidget(0, QFormLayout.FieldRole, self.combo_box)
 
-        self.comboBox_2 = QComboBox(self.formLayoutWidget)
-        self.comboBox_2.setObjectName(u"comboBox_2")
+        self.combo_box_2 = QComboBox(self.form_layout_widget)
+        self.combo_box_2.setObjectName(u"comboBox_2")
+        self.combo_box_2.addItem('action 2')
 
-        self.gestures_container.setWidget(1, QFormLayout.FieldRole, self.comboBox_2)
+        self.gestures_container.setWidget(1, QFormLayout.FieldRole, self.combo_box_2)
 
-        self.comboBox_3 = QComboBox(self.formLayoutWidget)
-        self.comboBox_3.setObjectName(u"comboBox_3")
+        self.combo_box_3 = QComboBox(self.form_layout_widget)
+        self.combo_box_3.setObjectName(u"comboBox_3")
+        self.combo_box_3.addItem('action 3')
 
-        self.gestures_container.setWidget(2, QFormLayout.FieldRole, self.comboBox_3)
+        self.gestures_container.setWidget(2, QFormLayout.FieldRole, self.combo_box_3)
 
-        self.comboBox_4 = QComboBox(self.formLayoutWidget)
-        self.comboBox_4.setObjectName(u"comboBox_4")
+        self.combo_box_4 = QComboBox(self.form_layout_widget)
+        self.combo_box_4.setObjectName(u"comboBox_4")
+        self.combo_box_4.addItem('action 3')
 
-        layout.addWidget(self.formLayoutWidget)
+        layout.addWidget(self.form_layout_widget)
 
-        self.gestures_container.setWidget(3, QFormLayout.FieldRole, self.comboBox_4)
+        self.gestures_container.setWidget(3, QFormLayout.FieldRole, self.combo_box_4)
 
         self.submit_btn = QPushButton()
         self.submit_btn.setObjectName(u"submit_btn")
@@ -123,10 +127,10 @@ class UiSettings(QWidget):
         self.webcam.setText(QCoreApplication.translate("settings", u"Webcam", None))
         self.smartphone.setText(QCoreApplication.translate("settings", u"Smartphone", None))
         self.gesture_label.setText(QCoreApplication.translate("settings", u"Gestures", None))
-        self.label_2.setText(QCoreApplication.translate("settings", u"TextLabel", None))
-        self.label_3.setText(QCoreApplication.translate("settings", u"TextLabel", None))
-        self.label_4.setText(QCoreApplication.translate("settings", u"TextLabel", None))
-        self.label_5.setText(QCoreApplication.translate("settings", u"TextLabel", None))
+        self.label_2.setText(QCoreApplication.translate("settings", u"Gesture 1", None))
+        self.label_3.setText(QCoreApplication.translate("settings", u"Gesture 2", None))
+        self.label_4.setText(QCoreApplication.translate("settings", u"Gesture 3", None))
+        self.label_5.setText(QCoreApplication.translate("settings", u"Gesture 4", None))
         self.submit_btn.setText(QCoreApplication.translate("settings", u"Submit", None))
         self.default_btn.setText(QCoreApplication.translate("settings", u"Default", None))
         self.cancel_btn.setText(QCoreApplication.translate("settings", u"Cancel", None))
