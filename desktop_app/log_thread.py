@@ -1,9 +1,6 @@
 import time
+from PySide6.QtCore import QThread, Signal
 
-import keyboard
-from PySide6.QtCore import QThread, Signal, Slot
-
-from desktop_app.gesture_service import GestureService
 from utils.windows_mouse_controller import WindowsMouseController
 
 
@@ -13,7 +10,6 @@ class LogThread(QThread):
         self.mouse_controller = WindowsMouseController(model)
         self.img_white = None
         self.normalized_position = None
-        self.last_gesture = None
 
     gesture_signal = Signal(str)
     is_stop_time = False
@@ -24,9 +20,9 @@ class LogThread(QThread):
                 break
             if self.img_white is not None and self.normalized_position is not None:
                 gesture = self.mouse_controller.activate(self.img_white, self.normalized_position)
-                if gesture != self.last_gesture:
-                    self.gesture_signal.emit(gesture)
-                    self.last_gesture = gesture
+                self.img_white = None
+                self.normalized_position = None
+                self.gesture_signal.emit(gesture)
             time.sleep(0.1)
 
     def update_image(self, img_white, normalized_position):

@@ -17,6 +17,7 @@ class UiMainFrame(QMainWindow):
         self.model = model
         self.setup_ui()
         self.settings_window = None
+        self.last_gesture = None
 
     def setup_ui(self):
         if not self.objectName():
@@ -116,9 +117,13 @@ class UiMainFrame(QMainWindow):
         self.hide()
 
     @Slot(str)
-    def add_to_log(self, item):
-        self.list_view.insertItem(0, item)
+    def add_to_log(self, gesture):
+        if self.last_gesture == gesture:
+            return None
+
+        self.list_view.insertItem(0, gesture)
         self.list_view.scrollToTop()
+        self.last_gesture = gesture
 
     def start_clicked(self):
         self.log_thread.is_stop_time = False
