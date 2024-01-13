@@ -12,8 +12,9 @@ from desktop_app.video_thread import VideoThread
 
 
 class UiMainFrame(QMainWindow):
-    def __init__(self):
+    def __init__(self, model):
         super().__init__()
+        self.model = model
         self.setup_ui()
         self.settings_window = None
 
@@ -50,8 +51,8 @@ class UiMainFrame(QMainWindow):
         self.list_view.setObjectName(u"list_view")
         self.list_view.setGeometry(QRect(550, 50, 180, 250))
 
-        self.log_thread = LogThread()
-        self.log_thread.gesture.connect(self.add_to_log)
+        self.log_thread = LogThread(self.model)
+        self.log_thread.gesture_signal.connect(self.add_to_log)
         self.log_thread.start()
 
         self.acions_log = QLabel(self)
@@ -87,10 +88,11 @@ class UiMainFrame(QMainWindow):
 
     # retranslateUi
 
-    @Slot(np.ndarray)
-    def update_image(self, cv_img):
+    @Slot(np.ndarray, object, object)
+    def update_image(self, cv_img, img_white, normalized_position):
         qt_image = self.convert_cv_qt(cv_img)
         self.image_label.setPixmap(qt_image)
+        self.log_thread.update_image(img_white, normalized_position)
 
     def convert_cv_qt(self, cv_image):
         rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
