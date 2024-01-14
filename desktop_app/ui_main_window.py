@@ -27,14 +27,14 @@ class UiMainFrame(QMainWindow):
         self.setSizeIncrement(QSize(1, 0))
 
         self.image_label = QLabel(self)
-        qpixmap = QPixmap("camera_not_found.png")
+        qpixmap = QPixmap("desktop_app/camera_not_found.png")
         qpixmap = qpixmap.scaledToWidth(480)
         qpixmap = qpixmap.scaledToHeight(270)
         self.image_label.setPixmap(qpixmap)
-        self.text_label = QLabel('Webcam')
+        # self.text_label = QLabel('Webcam')
         vbox = QVBoxLayout()
         vbox.addWidget(self.image_label)
-        vbox.addWidget(self.text_label)
+        # vbox.addWidget(self.text_label)
 
         self.vbox = vbox
         self.vbox.setGeometry(QRect(30, 30, 480, 270))
