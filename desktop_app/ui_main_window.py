@@ -12,10 +12,12 @@ from desktop_app.video_thread import VideoThread
 
 
 class UiMainFrame(QMainWindow):
-    def __init__(self):
+    def __init__(self, model):
         super().__init__()
+        self.model = model
         self.setup_ui()
         self.settings_window = None
+        self.last_gesture = None
 
     def setup_ui(self):
         if not self.objectName():
@@ -25,14 +27,14 @@ class UiMainFrame(QMainWindow):
         self.setSizeIncrement(QSize(1, 0))
 
         self.image_label = QLabel(self)
-        qpixmap = QPixmap("camera_not_found.png")
+        qpixmap = QPixmap("desktop_app/camera_not_found.png")
         qpixmap = qpixmap.scaledToWidth(480)
         qpixmap = qpixmap.scaledToHeight(270)
         self.image_label.setPixmap(qpixmap)
-        self.text_label = QLabel('Webcam')
+        # self.text_label = QLabel('Webcam')
         vbox = QVBoxLayout()
         vbox.addWidget(self.image_label)
-        vbox.addWidget(self.text_label)
+        # vbox.addWidget(self.text_label)
 
         self.vbox = vbox
         self.vbox.setGeometry(QRect(30, 30, 480, 270))
@@ -50,8 +52,8 @@ class UiMainFrame(QMainWindow):
         self.list_view.setObjectName(u"list_view")
         self.list_view.setGeometry(QRect(550, 50, 180, 250))
 
-        self.log_thread = LogThread()
-        self.log_thread.gesture.connect(self.add_to_log)
+        self.log_thread = LogThread(self.model)
+        self.log_thread.gesture_signal.connect(self.add_to_log)
         self.log_thread.start()
 
         self.acions_log = QLabel(self)
@@ -87,10 +89,11 @@ class UiMainFrame(QMainWindow):
 
     # retranslateUi
 
-    @Slot(np.ndarray)
-    def update_image(self, cv_img):
+    @Slot(np.ndarray, object, object)
+    def update_image(self, cv_img, img_white, normalized_position):
         qt_image = self.convert_cv_qt(cv_img)
         self.image_label.setPixmap(qt_image)
+        self.log_thread.update_image(img_white, normalized_position)
 
     def convert_cv_qt(self, cv_image):
         rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
@@ -114,9 +117,13 @@ class UiMainFrame(QMainWindow):
         self.hide()
 
     @Slot(str)
-    def add_to_log(self, item):
-        self.list_view.insertItem(0, item)
+    def add_to_log(self, gesture):
+        if self.last_gesture == gesture:
+            return None
+
+        self.list_view.insertItem(0, gesture)
         self.list_view.scrollToTop()
+        self.last_gesture = gesture
 
     def start_clicked(self):
         self.log_thread.is_stop_time = False

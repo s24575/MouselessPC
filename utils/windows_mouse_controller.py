@@ -4,6 +4,7 @@ import pyautogui
 
 from utils.hand_gesture_image_collector import HandGestureImageCollector
 
+
 class WindowsMouseController:
     class Actions(Enum):
         LEFT_CLICK = 1
@@ -11,8 +12,10 @@ class WindowsMouseController:
         MIDDLE_CLICK = 3
         DOUBLE_CLICK = 4
 
-    def __init__(self):
-        pass
+    def __init__(self, model):
+        self.model = model
+        self.screen_width, self.screen_height = pyautogui.size()
+        self.last_gesture = None
 
     def move_to_coordinates(self, x, y):
         pyautogui.moveTo(x, y)
@@ -36,30 +39,20 @@ class WindowsMouseController:
         print(f"move by {x},{y}")
         pyautogui.moveRel(x, y, duration=duration)
     
-    def activate(self, model, img_size: int):
-        image_collector = HandGestureImageCollector(img_size)
-        screen_width, screen_height = pyautogui.size()
-        last_gesture = None
-        while True:
-            key = cv2.waitKey(1)
-            if key == ord("q"):
-                break
-            img, img_white, normalized_position = image_collector.get_image(img_size)
-            if img_white is not None:
-                prediction, chance = model.predict(img_white)
-                label = "{}: {:0.2f}%".format(prediction, chance * 100)
+    def activate(self, img_white, normalized_position):
+        if img_white is None:
+            pass
 
-                cv2.putText(img, label, (25, 25), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        prediction, chance = self.model.predict(img_white)
 
-                x, y = normalized_position.x * screen_width, normalized_position.y * screen_height
-                self.drag_to(x, y)
+        x, y = normalized_position.x * self.screen_width, normalized_position.y * self.screen_height
+        self.drag_to(x, y)
 
-                if last_gesture != prediction:
-                    if prediction == 'b':
-                        self.click()
-                    elif prediction == 'c':
-                        self.right_click()
-                
-                last_gesture = prediction
-            if img is not None:
-                cv2.imshow("Image", img)
+        if self.last_gesture != prediction:
+            if prediction == 'b':
+                self.click()
+            elif prediction == 'c':
+                self.right_click()
+
+        self.last_gesture = prediction
+        return prediction

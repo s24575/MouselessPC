@@ -1,7 +1,13 @@
+import sys
+
 import tensorflow as tf
+from PySide6.QtWidgets import QApplication
+
+from desktop_app.ui_main_window import UiMainFrame
 from model.model import Model
 from utils.gesture_manager import GestureManager
 from utils.windows_mouse_controller import WindowsMouseController
+
 
 def main():
     SAMPLES = 10
@@ -27,8 +33,10 @@ def main():
     else:
         model.load_from_file()
     
-    mouse_controller = WindowsMouseController()
-    mouse_controller.activate(model, IMG_SIZE)
+    app = QApplication(sys.argv)
+    widget = UiMainFrame(model)
+    widget.show()
+    sys.exit(app.exec())
 
 
 if __name__ == '__main__':
