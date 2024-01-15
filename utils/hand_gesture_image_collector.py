@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from enum import Enum
 import math
 from typing import Any, Optional, Tuple
 
@@ -7,6 +6,8 @@ import cv2
 import numpy as np
 from utils.camera import Camera
 from cvzone.HandTrackingModule import HandDetector
+
+from utils.enums import KeyAction
 
 
 @dataclass
@@ -19,10 +20,6 @@ class NormalizedPosition:
 
 
 class HandGestureImageCollector:
-    class KeyAction(Enum):
-        SAVE = "s"
-        QUIT = "q"
-
     def __init__(self, img_size: int):
         self._img_size = img_size
         self._camera = Camera()
@@ -32,13 +29,13 @@ class HandGestureImageCollector:
         cv2.destroyAllWindows()
      
     def collect_image(self):
-        print(f"Press {self.KeyAction.SAVE.value} to save the displayed image")
+        print(f"Press {KeyAction.SAVE.value} to save the current image")
         while True:
-            collect = False
+            collect: bool = False
             key = cv2.waitKey(1)
-            if key == ord(self.KeyAction.QUIT.value):
+            if key == ord(KeyAction.QUIT.value):
                 return None
-            elif key == ord(self.KeyAction.SAVE.value):
+            elif key == ord(KeyAction.SAVE.value):
                 collect = True
             
             img, hand_img, _ = self.get_image(self._img_size)
@@ -49,7 +46,7 @@ class HandGestureImageCollector:
                 if collect:
                     return hand_img
 
-    def get_image(self, img_size: int, flip_img=True) -> Optional[Tuple[Any, Any]]:
+    def get_image(self, img_size: int, flip_img: bool = True) -> Optional[Tuple[Any, Any, NormalizedPosition]]:
         img, img_white, normalized_position = None, None, None
         success, img = self._camera.get_current_image()
         if success:
@@ -57,29 +54,22 @@ class HandGestureImageCollector:
                 img = cv2.flip(img, 1)
             hands, img = self._detector.findHands(img)
             if hands:
-                img_white, normalized_position = self.get_hand_image(hands, img, img_size)
+                img_white, normalized_position = self.get_hand_image(hands[0], img, img_size, 15)
 
         return img, img_white, normalized_position
-
-    @staticmethod
-    def get_hand_bbox_coordinates(hand_x: int, hand_y: int, hand_width: int, hand_height: int, img_width: int, img_height: int, padding: int = 0):
-        x1 = max(hand_x - padding, 0)
-        x2 = min(hand_x + hand_width + padding, img_width)
-        y1 = max(hand_y - padding, 0)
-        y2 = min(hand_y + hand_height + padding, img_height)
-        return x1, x2, y1, y2
     
     @staticmethod
-    def get_hand_image(hands, img, img_size: int):
-        padding = 15
+    def get_hand_image(hand, img, img_size: int, padding: int = 0):
         img_height, img_width, _ = img.shape
-        hand = hands[0]
         x, y, w, h = hand['bbox']
-        x1, x2, y1, y2 = HandGestureImageCollector.get_hand_bbox_coordinates(x, y, w, h, img_width, img_height, padding)
+        x1, x2, y1, y2 = HandGestureImageCollector.get_hand_bbox_vertex_positions(x, y, w, h, img_width, img_height,
+                                                                                  padding)
         crop_width, crop_height = x2 - x1, y2 - y1
 
         if crop_width > 0 and crop_height > 0:
-            normalized_position = NormalizedPosition((x1 + crop_width / 2) / img_width, (y1 + crop_height / 2) / img_height)
+            x_norm = (x1 + crop_width / 2) / img_width
+            y_norm = (y1 + crop_height / 2) / img_height
+            normalized_position = NormalizedPosition(x_norm, y_norm)
             img_crop = img[y1:y2, x1:x2]
 
             max_length = max(crop_width, crop_height)
@@ -99,3 +89,12 @@ class HandGestureImageCollector:
             return img_white, normalized_position
 
         return None, None
+
+    @staticmethod
+    def get_hand_bbox_vertex_positions(hand_x: int, hand_y: int, hand_width: int, hand_height: int,
+                                       img_width: int, img_height: int, padding: int = 0) -> Tuple[int, int, int, int]:
+        x1 = max(hand_x - padding, 0)
+        y1 = max(hand_y - padding, 0)
+        x2 = min(hand_x + hand_width + padding, img_width)
+        y2 = min(hand_y + hand_height + padding, img_height)
+        return x1, x2, y1, y2
