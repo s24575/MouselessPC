@@ -1,28 +1,27 @@
 import sys
 
-import tensorflow as tf
 from PySide6.QtWidgets import QApplication
 
 from desktop_app.ui_main_window import UiMainFrame
 from model.model import Model
+from utils.enums import MouseAction
 from utils.gesture_manager import GestureManager
-from utils.windows_mouse_controller import WindowsMouseController
 
 
 def main():
-    SAMPLES = 10
-    IMG_SIZE = 256
-    COLLECT_IMAGES = False
+    samples = 10
+    img_size = 256
+    collect_images = False
 
     gesture_manager = GestureManager()
-    gesture_manager.add_gesture("a")
-    gesture_manager.add_gesture("b")
-    gesture_manager.add_gesture("c")
+    gesture_manager.add_gesture("a", MouseAction.LEFT_CLICK)
+    gesture_manager.add_gesture("b", MouseAction.RIGHT_CLICK)
+    gesture_manager.add_gesture("c", MouseAction.DOUBLE_LEFT_CLICK)
 
-    model = Model(gesture_manager.hand_gestures, IMG_SIZE)
+    model = Model(gesture_manager.hand_gestures, img_size)
 
-    if COLLECT_IMAGES:
-        status = gesture_manager.collect_gesture_images(SAMPLES, IMG_SIZE)
+    if collect_images:
+        status = gesture_manager.collect_gesture_images(samples, img_size)
 
         if status is False:
             print("Collecting images was cancelled, exiting...")

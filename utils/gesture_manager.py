@@ -1,15 +1,19 @@
 import os
 import time
+from dataclasses import dataclass
 from typing import List
 
 import cv2
 
+from utils.enums import MouseAction
 from utils.hand_gesture_image_collector import HandGestureImageCollector
 
 
+@dataclass
 class HandGesture:
-    def __init__(self, name: str):
-        self.name = name
+    name: str
+    action: MouseAction
+
 
 class GestureManager:
     data_dir = "model/data/images"
@@ -30,8 +34,8 @@ class GestureManager:
                 self.save_gesture_image(hand_gesture.name, hand_img)
         return True
 
-    def save_gesture_image(self, hand_gesture: str, image):
-        image_dir = os.path.join(self.data_dir, hand_gesture)
+    def save_gesture_image(self, hand_gesture_name: str, image):
+        image_dir = os.path.join(self.data_dir, hand_gesture_name)
         if not os.path.exists(image_dir):
             os.makedirs(image_dir)
         image_filename = f"image_{time.time()}.jpg"
@@ -39,6 +43,6 @@ class GestureManager:
         cv2.imwrite(image_filepath, image)
         print("Image saved successfully.")
 
-    def add_gesture(self, name: str):
-        gesture = HandGesture(name)
+    def add_gesture(self, name: str, action: MouseAction):
+        gesture = HandGesture(name, action)
         self.hand_gestures.append(gesture)

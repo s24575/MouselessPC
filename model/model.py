@@ -1,6 +1,4 @@
-from typing import List
-import cv2
-import numpy as np
+from typing import List, Tuple
 
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image
@@ -8,7 +6,6 @@ from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 import numpy as np
 
 from utils.gesture_manager import HandGesture
-from utils.hand_gesture_image_collector import HandGestureImageCollector
 
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import MobileNetV2
@@ -19,7 +16,7 @@ class Model:
     MODEL_PATH = "model/data"
 
     def __init__(self, hand_gestures: List[HandGesture], img_size: int):
-        self.hand_gestures = [x.name for x in hand_gestures]
+        self.hand_gestures = hand_gestures
         self.img_size = img_size
         self.model = None
 
@@ -103,11 +100,7 @@ class Model:
         print(f'Test accuracy: {test_acc}')
         print(f'Test loss: {test_loss}')
 
-        # self.model.save('model/data/model')
-
-    def predict(self, img_white):
-        # model = tf.keras.models.load_model('model/data/model')
-
+    def predict(self, img_white) -> Tuple[HandGesture, float]:
         img_array = image.img_to_array(img_white)
         img_array = np.expand_dims(img_array, axis=0)
         img_array = preprocess_input(img_array)
