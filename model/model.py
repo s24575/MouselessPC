@@ -1,116 +1,99 @@
+import time
 from typing import List, Tuple
 
 import tensorflow as tf
-from tensorflow.keras.preprocessing import image
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+from sklearn.model_selection import train_test_split
 import numpy as np
 
+from utils.consts import Consts
 from utils.gesture_manager import HandGesture
-
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.applications import MobileNetV2
-from tensorflow.keras import layers, models
 
 
 class Model:
-    MODEL_PATH = "model/data"
+    MODEL_SAVE_PATH = 'model/keypoint_classifier/keypoint_classifier.hdf5'
+    MODEL_TFLITE_SAVE_PATH = 'model/keypoint_classifier/keypoint_classifier.tflite'
 
-    def __init__(self, hand_gestures: List[HandGesture], img_size: int):
+    def __init__(self, hand_gestures: List[HandGesture],
+                 dataset_path: str = Consts.LANDMARKS_PATH,
+                 num_threads=1):
         self.hand_gestures = hand_gestures
-        self.img_size = img_size
+        self.img_size = Consts.HAND_IMG_SIZE
+        self.dataset_path = dataset_path
         self.model = None
+        self.RANDOM_SEED = 42
+        self.batch_size = 128
+        self.num_threads = num_threads
 
-    def load_from_file(self):
-        self.model = tf.keras.models.load_model(self.MODEL_PATH)
-
-    def save_to_file(self):
-        self.model.save(self.MODEL_PATH)
+    def init(self):
+        self.interpreter = tf.lite.Interpreter(model_path=self.MODEL_TFLITE_SAVE_PATH,
+                                               num_threads=self.num_threads)
+        self.interpreter.allocate_tensors()
+        self.input_details = self.interpreter.get_input_details()
+        self.output_details = self.interpreter.get_output_details()
 
     def train(self):
-        # Define your data paths
-        train_data_dir = r'model\data\images'
-        validation_data_dir = r'model\data\images'
-        test_data_dir = r'model\data\images'
+        X_dataset = np.loadtxt(self.dataset_path, delimiter=',', dtype='float32', usecols=list(range(1, (21 * 2) + 1)))
+        y_dataset = np.loadtxt(self.dataset_path, delimiter=',', dtype='int32', usecols=0)
 
-        num_classes = len(self.hand_gestures)
-    
-        # Set up data generators with data augmentation
-        train_datagen = ImageDataGenerator(
-            rescale=1./255,
-            rotation_range=20,
-            width_shift_range=0.2,
-            height_shift_range=0.2,
-            shear_range=0.2,
-            zoom_range=0.2,
-            horizontal_flip=True,
-            fill_mode='nearest'
-        )
+        X_train, X_test, y_train, y_test = train_test_split(X_dataset, y_dataset, train_size=0.75,
+                                                            random_state=self.RANDOM_SEED)
 
-        validation_datagen = ImageDataGenerator(rescale=1./255)
-
-        # Set up model
-        base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(self.img_size, self.img_size, 3))
-        base_model.trainable = False
-
-        self.model = models.Sequential([
-            base_model,
-            layers.GlobalAveragePooling2D(),
-            layers.Dense(64, activation='relu'),
-            layers.Dense(num_classes, activation='softmax')
+        model = tf.keras.models.Sequential([
+            tf.keras.layers.Input((21 * 2,)),
+            tf.keras.layers.Dropout(0.2),
+            tf.keras.layers.Dense(20, activation='relu'),
+            tf.keras.layers.Dropout(0.4),
+            tf.keras.layers.Dense(10, activation='relu'),
+            tf.keras.layers.Dense(len(self.hand_gestures), activation='softmax')
         ])
 
-        # Compile the model
-        self.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+        # Model checkpoint callback
+        cp_callback = tf.keras.callbacks.ModelCheckpoint(self.MODEL_SAVE_PATH, verbose=1, save_weights_only=False)
+        # Callback for early stopping
+        es_callback = tf.keras.callbacks.EarlyStopping(patience=20, verbose=1)
 
-        # Set up data generators
-        batch_size = 32
-        train_generator = train_datagen.flow_from_directory(
-            train_data_dir,
-            target_size=(self.img_size, self.img_size),
-            batch_size=batch_size,
-            class_mode='categorical'
+        # Model compilation
+        model.compile(
+            optimizer='adam',
+            loss='sparse_categorical_crossentropy',
+            metrics=['accuracy']
         )
 
-        validation_generator = validation_datagen.flow_from_directory(
-            validation_data_dir,
-            target_size=(self.img_size, self.img_size),
-            batch_size=batch_size,
-            class_mode='categorical'
+        model.fit(
+            X_train,
+            y_train,
+            epochs=1000,
+            batch_size=self.batch_size,
+            validation_data=(X_test, y_test),
+            callbacks=[cp_callback, es_callback]
         )
 
-        # Train the model
-        history = self.model.fit(
-            train_generator,
-            steps_per_epoch=train_generator.samples // batch_size + 1,
-            epochs=10,
-            validation_data=validation_generator,
-            validation_steps=validation_generator.samples // + 1
-        )
+        # Model evaluation
+        val_loss, val_acc = model.evaluate(X_test, y_test, batch_size=self.batch_size)
+        print(f"Validation loss: {val_acc}, Validation accuracy: {val_acc}")
 
-        # Evaluate the model
-        test_generator = validation_datagen.flow_from_directory(
-            test_data_dir,
-            target_size=(self.img_size, self.img_size),
-            batch_size=batch_size,
-            class_mode='categorical',
-            shuffle=False
-        )
+        # Save as a model dedicated to inference
+        model.save(self.MODEL_SAVE_PATH, include_optimizer=False)
 
-        test_loss, test_acc = self.model.evaluate(test_generator, steps=test_generator.samples // batch_size + 1)
-        print(f'Test accuracy: {test_acc}')
-        print(f'Test loss: {test_loss}')
+        # Transform model (quantization)
+        converter = tf.lite.TFLiteConverter.from_keras_model(model)
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        tflite_quantized_model = converter.convert()
 
-    def predict(self, img_white) -> Tuple[HandGesture, float]:
-        img_array = image.img_to_array(img_white)
-        img_array = np.expand_dims(img_array, axis=0)
-        img_array = preprocess_input(img_array)
+        open(self.MODEL_TFLITE_SAVE_PATH, 'wb').write(tflite_quantized_model)
 
-        # Make a prediction
-        predictions = self.model.predict(img_array, verbose=None)
+    def predict(self, landmark_list) -> Tuple[HandGesture, float]:
+        input_details_tensor_index = self.input_details[0]['index']
+        self.interpreter.set_tensor(
+            input_details_tensor_index,
+            np.array([landmark_list], dtype=np.float32))
+        self.interpreter.invoke()
 
-        # Decode and print the prediction
-        predicted_chance = np.max(predictions)
-        predicted_class = np.argmax(predictions)
-        predicted_gesture = self.hand_gestures[predicted_class]
+        output_details_tensor_index = self.output_details[0]['index']
 
-        return predicted_gesture, predicted_chance
+        result = self.interpreter.get_tensor(output_details_tensor_index)
+
+        result_index = np.argmax(np.squeeze(result))
+        result_chance = np.max(np.squeeze(result))
+
+        return self.hand_gestures[result_index], result_chance
