@@ -6,7 +6,6 @@ import cv2
 from PySide6.QtGui import *
 from PySide6.QtCore import *
 
-from desktop_app.log_thread import LogThread
 from desktop_app.ui_settings import UiSettings
 from desktop_app.video_thread import VideoThread
 
@@ -39,8 +38,9 @@ class UiMainFrame(QMainWindow):
         self.vbox = vbox
         self.vbox.setGeometry(QRect(30, 30, 480, 270))
 
-        self.video_thread = VideoThread()
+        self.video_thread = VideoThread(self.model)
         self.video_thread.change_pixmap_signal.connect(self.update_image)
+        self.video_thread.gesture_signal.connect(self.add_to_log)
         self.video_thread.start()
 
         self.settings = QPushButton(self)
@@ -51,10 +51,6 @@ class UiMainFrame(QMainWindow):
         self.list_view = QListWidget(self)
         self.list_view.setObjectName(u"list_view")
         self.list_view.setGeometry(QRect(550, 50, 180, 250))
-
-        self.log_thread = LogThread(self.model)
-        self.log_thread.gesture_signal.connect(self.add_to_log)
-        self.log_thread.start()
 
         self.acions_log = QLabel(self)
         self.acions_log.setObjectName(u"acions_log")
@@ -90,12 +86,12 @@ class UiMainFrame(QMainWindow):
     # retranslateUi
 
     @Slot(np.ndarray, object, object)
-    def update_image(self, cv_img, img_white, normalized_position):
+    def update_image(self, cv_img):
         qt_image = self.convert_cv_qt(cv_img)
         self.image_label.setPixmap(qt_image)
-        self.log_thread.update_image(img_white, normalized_position)
 
-    def convert_cv_qt(self, cv_image):
+    @staticmethod
+    def convert_cv_qt(cv_image):
         rgb_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
         h, w, c = rgb_image.shape
         bytes_per_line = c * w
@@ -106,8 +102,6 @@ class UiMainFrame(QMainWindow):
     def closeEvent(self, event):
         self.video_thread.terminate()
         QThread.wait(self.video_thread)
-        self.log_thread.terminate()
-        QThread.wait(self.log_thread)
         event.accept()
 
     def display_settings(self):
@@ -126,9 +120,7 @@ class UiMainFrame(QMainWindow):
         self.last_gesture = gesture
 
     def start_clicked(self):
-        self.log_thread.is_stop_time = False
-        self.log_thread.start()
+        self.video_thread.process_gestures = True
 
     def stop_clicked(self):
-        self.log_thread.is_stop_time = True
-        self.log_thread.exit()
+        self.video_thread.process_gestures = False

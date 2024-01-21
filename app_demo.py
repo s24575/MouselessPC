@@ -10,28 +10,25 @@ from utils.gesture_manager import GestureManager
 
 def main():
     samples = 10
-    img_size = 256
     collect_images = False
 
     gesture_manager = GestureManager()
-    gesture_manager.add_gesture("a", MouseAction.LEFT_CLICK)
-    gesture_manager.add_gesture("b", MouseAction.RIGHT_CLICK)
-    gesture_manager.add_gesture("c", MouseAction.DOUBLE_LEFT_CLICK)
+    gesture_manager.add_gesture("fist", MouseAction.LEFT_CLICK)
+    gesture_manager.add_gesture("palm", MouseAction.NONE)
+    gesture_manager.add_gesture("moon", MouseAction.RIGHT_CLICK)
 
-    model = Model(gesture_manager.hand_gestures, img_size)
+    model = Model(gesture_manager.hand_gestures)
 
     if collect_images:
-        status = gesture_manager.collect_gesture_images(samples, img_size)
+        status = gesture_manager.collect_gesture_images(samples)
 
         if status is False:
             print("Collecting images was cancelled, exiting...")
             return
         
         model.train()
-        model.save_to_file()
-    else:
-        model.load_from_file()
-    
+
+    model.init()
     app = QApplication(sys.argv)
     widget = UiMainFrame(model)
     widget.show()

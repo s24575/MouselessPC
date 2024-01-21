@@ -1,62 +1,118 @@
-from dataclasses import dataclass
+import itertools
 import math
-from typing import Any, Optional, Tuple
+from typing import Tuple
 
 import cv2
 import numpy as np
+import mediapipe as mp
 from utils.camera import Camera
-from cvzone.HandTrackingModule import HandDetector
 
+from utils.consts import Consts
 from utils.enums import KeyAction
 
 
-@dataclass
-class NormalizedPosition:
-    """
-    Mouse/hand position on the screen/image normalized to range [0.0, 1.0]
-    """
-    x: float
-    y: float
-
-
 class HandGestureImageCollector:
-    def __init__(self, img_size: int):
-        self._img_size = img_size
+    def __init__(self):
+        self._img_size = Consts.HAND_IMG_SIZE
         self._camera = Camera()
-        self._detector = HandDetector(maxHands=1)
+        self.mp_hands = mp.solutions.hands
+        self._hands = self.mp_hands.Hands(max_num_hands=1)
+        # self._detector = HandDetector(maxHands=1)
 
     def __del__(self):
         cv2.destroyAllWindows()
-     
-    def collect_image(self):
+
+    def get_current_image(self):
+        success, img = self._camera.get_current_image()
+        return success, img
+
+    def collect_landmarks(self):
         print(f"Press {KeyAction.SAVE.value} to save the current image")
         while True:
-            collect: bool = False
+            save = False
             key = cv2.waitKey(1)
             if key == ord(KeyAction.QUIT.value):
                 return None
             elif key == ord(KeyAction.SAVE.value):
-                collect = True
-            
-            img, hand_img, _ = self.get_image(self._img_size)
-            if img is not None:
-                cv2.imshow("Image", img)
-            if hand_img is not None:
-                cv2.imshow("Image modified", hand_img)
-                if collect:
-                    return hand_img
+                save = True
 
-    def get_image(self, img_size: int, flip_img: bool = True) -> Optional[Tuple[Any, Any, NormalizedPosition]]:
-        img, img_white, normalized_position = None, None, None
-        success, img = self._camera.get_current_image()
-        if success:
-            if flip_img:
-                img = cv2.flip(img, 1)
-            hands, img = self._detector.findHands(img)
-            if hands:
-                img_white, normalized_position = self.get_hand_image(hands[0], img, img_size, 15)
+            success, image = self._camera.get_current_image()
+            if not success:
+                continue
 
-        return img, img_white, normalized_position
+            image = cv2.flip(image, 1)
+            cv2.imshow("Image", image)
+            landmark_positions, _ = self.get_landmark_positions(image)
+            if landmark_positions and save:
+                return landmark_positions
+
+    def get_landmark_positions(self, image):
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        results = self._hands.process(image)
+
+        if results.multi_hand_landmarks is not None:
+            for hand_landmarks, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
+                main_landmark_position = hand_landmarks.landmark[9]
+                landmarks = self.calc_landmarks(image, hand_landmarks)
+                pre_processed_landmarks = self.pre_process_landmarks(landmarks)
+                return pre_processed_landmarks, main_landmark_position
+        return None, None
+
+    @staticmethod
+    def calc_landmarks(image, landmarks):
+        image_width, image_height = image.shape[1], image.shape[0]
+
+        landmark_point = []
+
+        # Keypoint
+        for _, landmark in enumerate(landmarks.landmark):
+            landmark_x = min(int(landmark.x * image_width), image_width - 1)
+            landmark_y = min(int(landmark.y * image_height), image_height - 1)
+            # landmark_z = landmark.z
+
+            landmark_point.append([landmark_x, landmark_y])
+
+        return landmark_point
+
+    @staticmethod
+    def pre_process_landmarks(landmark_list):
+
+        # Convert to relative coordinates
+        base_x, base_y = 0, 0
+        for index, landmark_point in enumerate(landmark_list):
+            if index == 0:
+                base_x, base_y = landmark_point[0], landmark_point[1]
+
+            landmark_list[index][0] = landmark_list[index][0] - base_x
+            landmark_list[index][1] = landmark_list[index][1] - base_y
+
+        # Convert to a one-dimensional list
+        landmark_list = list(itertools.chain.from_iterable(landmark_list))
+
+        # Normalization
+        max_value = max(list(map(abs, landmark_list)))
+
+        def normalize_(n):
+            return n / max_value
+
+        landmark_list = list(map(normalize_, landmark_list))
+
+        return landmark_list
+
+    # def get_image_and_hand_image(self) -> Tuple[Any, Any, Tuple[float, float]]:
+    #     img, hand_img, normalized_position = None, None, None
+    #     success, img = self._camera.get_current_image()
+    #     if success:
+    #         img = cv2.flip(img, 1)
+    #         hands, img = self._detector.findHands(img, flipType=False)
+    #         if hands:
+    #             hand = hands[0]
+    #             hand_img = self.get_hand_image(hand, img, self._img_size, 15)
+    #             if hand_img is not None:
+    #                 img_width, img_height, _ = img.shape
+    #                 normalized_position = self.get_normalized_position(hand, img_width, img_height)
+    #
+    #     return img, hand_img, normalized_position
     
     @staticmethod
     def get_hand_image(hand, img, img_size: int, padding: int = 0):
@@ -67,9 +123,6 @@ class HandGestureImageCollector:
         crop_width, crop_height = x2 - x1, y2 - y1
 
         if crop_width > 0 and crop_height > 0:
-            x_norm = (x1 + crop_width / 2) / img_width
-            y_norm = (y1 + crop_height / 2) / img_height
-            normalized_position = NormalizedPosition(x_norm, y_norm)
             img_crop = img[y1:y2, x1:x2]
 
             max_length = max(crop_width, crop_height)
@@ -83,12 +136,12 @@ class HandGestureImageCollector:
             gap_h = math.ceil((img_size - crop_height) / 2)
             gap_w = math.ceil((img_size - crop_width) / 2)
 
-            img_white = np.ones((img_size, img_size, 3), np.uint8) * 255
-            img_white[gap_h:gap_h + crop_height, gap_w:gap_w + crop_width] = img_resized
+            hand_img = np.ones((img_size, img_size, 3), np.uint8) * 255
+            hand_img[gap_h:gap_h + crop_height, gap_w:gap_w + crop_width] = img_resized
 
-            return img_white, normalized_position
+            return hand_img
 
-        return None, None
+        return None
 
     @staticmethod
     def get_hand_bbox_vertex_positions(hand_x: int, hand_y: int, hand_width: int, hand_height: int,
@@ -98,3 +151,9 @@ class HandGestureImageCollector:
         x2 = min(hand_x + hand_width + padding, img_width)
         y2 = min(hand_y + hand_height + padding, img_height)
         return x1, x2, y1, y2
+
+    @staticmethod
+    def get_normalized_position(main_landmark_position, img_width: int, img_height: int) -> Tuple[float, float]:
+        x_norm = main_landmark_position.x / img_width
+        y_norm = main_landmark_position.y / img_height
+        return x_norm, y_norm

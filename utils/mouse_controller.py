@@ -12,6 +12,11 @@ class MouseController:
         return size.width, size.height
 
     @staticmethod
+    def get_mouse_position() -> Tuple[int, int]:
+        position = pyautogui.position()
+        return int(position.x), int(position.y)
+
+    @staticmethod
     def left_click():
         pyautogui.click()
 
@@ -28,15 +33,15 @@ class MouseController:
         pyautogui.middleClick()
 
     @staticmethod
-    def move_to(x: int, y: int, duration: int = 0):
+    def move_to(x: int, y: int, duration: int = 0.1):
         pyautogui.moveTo(x, y, duration=duration)
 
     @staticmethod
-    def drag_to(x: int, y: int, duration: int = 0):
+    def drag_to(x: int, y: int, duration: int = 0.1):
         pyautogui.dragTo(x, y, duration=duration)
 
     @staticmethod
-    def move_by(x: int, y: int, duration: int = 0):
+    def move_relative(x: int, y: int, duration: int = 0.1):
         pyautogui.moveRel(x, y, duration=duration)
 
     @staticmethod

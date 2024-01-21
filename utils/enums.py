@@ -2,10 +2,11 @@ from enum import Enum
 
 
 class MouseAction(Enum):
-    LEFT_CLICK = 1
-    DOUBLE_LEFT_CLICK = 2
-    RIGHT_CLICK = 3
-    MIDDLE_CLICK = 4
+    NONE = 1
+    LEFT_CLICK = 2
+    DOUBLE_LEFT_CLICK = 3
+    RIGHT_CLICK = 4
+    MIDDLE_CLICK = 5
 
 
 class KeyAction(Enum):
