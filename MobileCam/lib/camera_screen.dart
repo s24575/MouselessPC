@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({
-    super.key,
+    Key? key,
     required this.cameras,
-  });
+  }) : super(key: key);
 
   final List<CameraDescription>? cameras;
 
@@ -24,7 +24,7 @@ class CameraScreenState extends State<CameraScreen> {
     initCamera(widget.cameras![0]);
   }
 
-  Future initCamera(CameraDescription cameraDescription) async {
+  Future<void> initCamera(CameraDescription cameraDescription) async {
     _controller = CameraController(cameraDescription, ResolutionPreset.high);
     try {
       await _controller.initialize().then((_) {
@@ -45,36 +45,37 @@ class CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.deepOrange,
-          title: const Text('Second Route'),
-        ),
-        body: Stack(
-          children: [
-            (_controller.value.isInitialized)
-                ? CameraPreview(_controller)
-                : Container(
-                    color: Colors.black,
-                    child: const Center(child: CircularProgressIndicator())),
-            GestureDetector(
-              onTap: () {
-                setState(() => _isRearCameraSelected = !_isRearCameraSelected);
-                initCamera(widget.cameras![_isRearCameraSelected ? 0 : 1]);
-              },
-              child:
-                  button(Icons.flip_camera_ios_outlined, Alignment.bottomLeft),
-            ),
-            GestureDetector(
-              onTap: () {
-                HttpServerConnection httpServer =
-                    HttpServerConnection(_controller);
-                httpServer.startServer();
-              },
-              child: button(Icons.cast, Alignment.bottomRight),
-            ),
-          ],
-        )
-        );
+      appBar: AppBar(
+        backgroundColor: Colors.deepOrange,
+        title: const Text('Second Route'),
+      ),
+      body: Stack(
+        children: [
+          _controller.value.isInitialized
+              ? CameraPreview(_controller)
+              : Container(
+                  color: Colors.black,
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+          GestureDetector(
+            onTap: () {
+              setState(() =>
+                  _isRearCameraSelected = !_isRearCameraSelected);
+              initCamera(widget.cameras![_isRearCameraSelected ? 0 : 1]);
+            },
+            child: button(Icons.flip_camera_ios_outlined, Alignment.bottomLeft),
+          ),
+          GestureDetector(
+            onTap: () {
+              HttpServerConnection httpServer =
+                  HttpServerConnection(_controller);
+              httpServer.startServer();
+            },
+            child: button(Icons.cast, Alignment.bottomRight),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget button(IconData icon, Alignment alignment) {
