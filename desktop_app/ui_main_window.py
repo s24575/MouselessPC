@@ -85,7 +85,7 @@ class UiMainFrame(QMainWindow):
 
     # retranslateUi
 
-    @Slot(np.ndarray, object, object)
+    @Slot(np.ndarray)
     def update_image(self, cv_img):
         qt_image = self.convert_cv_qt(cv_img)
         self.image_label.setPixmap(qt_image)
@@ -124,3 +124,6 @@ class UiMainFrame(QMainWindow):
 
     def stop_clicked(self):
         self.video_thread.process_gestures = False
+
+    def change_video_source(self, url):
+        self.video_thread.change_video_source(url)

@@ -1,8 +1,9 @@
 from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsView, QHBoxLayout,
                                QLabel, QListView, QPushButton, QSizePolicy,
-                               QVBoxLayout, QWidget, QComboBox, QFormLayout, QDialog)
+                               QVBoxLayout, QWidget, QComboBox, QFormLayout, QDialog, QInputDialog, QLineEdit)
 from PySide6.QtGui import *
 from PySide6.QtCore import *
+import re
 
 
 class UiSettings(QWidget):
@@ -32,12 +33,13 @@ class UiSettings(QWidget):
 
         self.webcam = QPushButton(self.horizontalLayoutWidget)
         self.webcam.setObjectName(u"webcam")
+        self.webcam.clicked.connect(self.webcam_clicked)
 
         self.source_container.addWidget(self.webcam)
 
         self.smartphone = QPushButton(self.horizontalLayoutWidget)
         self.smartphone.setObjectName(u"smartphone")
-        self.smartphone.setEnabled(False)
+        self.smartphone.clicked.connect(self.smartphone_clicked)
 
         layout.addWidget(self.horizontalLayoutWidget)
 
@@ -135,6 +137,19 @@ class UiSettings(QWidget):
         self.default_btn.setText(QCoreApplication.translate("settings", u"Default", None))
         self.cancel_btn.setText(QCoreApplication.translate("settings", u"Cancel", None))
     # retranslateUi
+
+    def webcam_clicked(self):
+        self.parent_window.change_video_source(0)
+
+    def smartphone_clicked(self):
+        text, ok = QInputDialog.getText(self, "QInputDialog.getText()",
+                                        "URL:", QLineEdit.Normal)
+        if ok and text:
+            pattern = re.compile("^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{0,5}/?.*") # idk if it's good
+            # max port 65535
+            if re.fullmatch(pattern, text):
+                url = "http://" + text
+                self.parent_window.change_video_source(url)
 
     def submit_clicked(self):
         print("Submit button clicked")

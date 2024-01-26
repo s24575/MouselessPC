@@ -1,5 +1,6 @@
 import itertools
 import math
+import re
 from typing import Tuple
 
 import cv2
@@ -21,6 +22,19 @@ class HandGestureImageCollector:
 
     def __del__(self):
         cv2.destroyAllWindows()
+
+    @property
+    def camera(self):
+        return self._camera
+
+    @camera.setter
+    def camera(self, url: str | int):
+        pattern = re.compile("^http://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{0,5}/?.*")
+        if re.fullmatch(pattern, str(url)) is None and url != 0:
+            raise ValueError("Incorrect video source")
+
+        self._camera = Camera(url)
+
 
     def get_current_image(self):
         success, img = self._camera.get_current_image()

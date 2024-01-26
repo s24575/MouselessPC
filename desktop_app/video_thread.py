@@ -9,7 +9,7 @@ from utils.mouse_controller import MouseController
 
 
 class VideoThread(QThread):
-    change_pixmap_signal = Signal(np.ndarray, object, object)
+    change_pixmap_signal = Signal(np.ndarray)
     image_collector = HandGestureImageCollector()
     gesture_signal = Signal(str)
     process_gestures = False
@@ -28,7 +28,7 @@ class VideoThread(QThread):
                 time.sleep(1)
                 continue
             image = cv2.flip(image, 1)
-            self.change_pixmap_signal.emit(image, None, None)
+            self.change_pixmap_signal.emit(image)
             hand_landmarks, main_landmark_position = self.image_collector.get_landmark_positions(image)
             if self.process_gestures and hand_landmarks is not None:
                 gesture = self.activate(hand_landmarks, main_landmark_position)
@@ -47,3 +47,6 @@ class VideoThread(QThread):
             self.previous_gesture_name = hand_gesture.name
 
         return hand_gesture.name
+
+    def change_video_source(self, url):
+        self.image_collector.camera = url
