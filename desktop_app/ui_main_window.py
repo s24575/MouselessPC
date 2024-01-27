@@ -85,7 +85,7 @@ class UiMainFrame(QMainWindow):
 
     # retranslateUi
 
-    @Slot(np.ndarray, object, object)
+    @Slot(np.ndarray)
     def update_image(self, cv_img):
         qt_image = self.convert_cv_qt(cv_img)
         self.image_label.setPixmap(qt_image)

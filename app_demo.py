@@ -1,5 +1,6 @@
 import sys
 
+import pyautogui
 from PySide6.QtWidgets import QApplication
 
 from desktop_app.ui_main_window import UiMainFrame
@@ -9,6 +10,8 @@ from utils.gesture_manager import GestureManager
 
 
 def main():
+    pyautogui.FAILSAFE = False
+
     samples = 10
     collect_images = False
 
