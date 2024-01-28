@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsView, QHBoxLayout,
                                QLabel, QListView, QPushButton, QSizePolicy,
-                               QVBoxLayout, QWidget, QMainWindow, QListWidget)
+                               QVBoxLayout, QWidget, QMainWindow, QListWidget, QDialog, QInputDialog, QDialogButtonBox,
+                               QMessageBox)
 import numpy as np
 import cv2
 from PySide6.QtGui import *
@@ -30,10 +31,8 @@ class UiMainFrame(QMainWindow):
         qpixmap = qpixmap.scaledToWidth(480)
         qpixmap = qpixmap.scaledToHeight(270)
         self.image_label.setPixmap(qpixmap)
-        # self.text_label = QLabel('Webcam')
         vbox = QVBoxLayout()
         vbox.addWidget(self.image_label)
-        # vbox.addWidget(self.text_label)
 
         self.vbox = vbox
         self.vbox.setGeometry(QRect(30, 30, 480, 270))
@@ -67,23 +66,22 @@ class UiMainFrame(QMainWindow):
 
         self.processing_label = QLabel(self)
         self.processing_label.setObjectName(u"processing_label")
-        self.processing_label.setGeometry(QRect(280, 340, 171, 16))
+        self.processing_label.setGeometry(QRect(273, 340, 181, 20))
+        font = QFont()
+        font.setPointSize(10)
+        self.processing_label.setFont(font)
 
         self.retranslate_ui(self)
 
         QMetaObject.connectSlotsByName(self)
 
-    # setupUi
-
     def retranslate_ui(self, main_frame):
         main_frame.setWindowTitle(QCoreApplication.translate("main_frame", u"Widget", None))
-        self.settings.setText(QCoreApplication.translate("main_frame", u"Settings", None))
+        self.settings.setText(QCoreApplication.translate("main_frame", u"Video source", None))
         self.acions_log.setText(QCoreApplication.translate("main_frame", u"Actions Log", None))
         self.start.setText(QCoreApplication.translate("main_frame", u"Start", None))
         self.stop.setText(QCoreApplication.translate("main_frame", u"Stop", None))
-        self.processing_label.setText(QCoreApplication.translate("main_frame", u"Start/Stope gesture processing", None))
-
-    # retranslateUi
+        self.processing_label.setText(QCoreApplication.translate("main_frame", u"Start/Stop gesture processing", None))
 
     @Slot(np.ndarray)
     def update_image(self, cv_img):
@@ -108,7 +106,7 @@ class UiMainFrame(QMainWindow):
         if self.settings_window is None:
             self.settings_window = UiSettings(self)
         self.settings_window.show()
-        self.hide()
+        # self.hide()
 
     @Slot(str)
     def add_to_log(self, gesture):
@@ -124,3 +122,6 @@ class UiMainFrame(QMainWindow):
 
     def stop_clicked(self):
         self.video_thread.process_gestures = False
+
+    def change_video_source(self, url):
+        self.video_thread.change_video_source(url)

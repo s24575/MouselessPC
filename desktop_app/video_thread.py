@@ -25,8 +25,12 @@ class VideoThread(QThread):
 
             image = cv2.flip(image, 1)
             self.change_pixmap_signal.emit(image)
+
             if self.process_gestures:
                 hand_landmarks, main_landmark_position = self.image_collector.get_landmark_positions(image)
                 if hand_landmarks is not None:
                     gesture = self.gesture_manager.activate(hand_landmarks, main_landmark_position)
                     self.gesture_signal.emit(gesture)
+
+    def change_video_source(self, url):
+        self.image_collector.camera = url

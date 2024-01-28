@@ -2,8 +2,8 @@ import cv2
 
 
 class Camera:
-    def __init__(self):
-        self.cap = cv2.VideoCapture(0)
+    def __init__(self, url=0):
+        self.cap = cv2.VideoCapture(url)
 
     def __del__(self):
         self.cap.release()
