@@ -3,7 +3,7 @@ from typing import Tuple
 import pyautogui
 
 from utils.consts import Consts
-from utils.enums import MouseAction
+from utils.enums import Action
 
 
 class MouseController:
@@ -56,13 +56,25 @@ class MouseController:
         return x, y
 
     @staticmethod
-    def execute_mouse_action(mouse_action: MouseAction):
+    def volume_up():
+        pyautogui.press("volumeup")
+
+    @staticmethod
+    def volume_down():
+        pyautogui.press("volumedown")
+
+    @staticmethod
+    def execute_mouse_action(mouse_action: Action):
         match mouse_action:
-            case MouseAction.LEFT_CLICK:
+            case Action.LEFT_CLICK:
                 MouseController.left_click()
-            case MouseAction.DOUBLE_LEFT_CLICK:
+            case Action.DOUBLE_LEFT_CLICK:
                 MouseController.double_left_click()
-            case MouseAction.RIGHT_CLICK:
+            case Action.RIGHT_CLICK:
                 MouseController.right_click()
-            case MouseAction.MIDDLE_CLICK:
+            case Action.MIDDLE_CLICK:
                 MouseController.middle_click()
+            case Action.VOLUME_UP:
+                MouseController.volume_up()
+            case Action.VOLUME_DOWN:
+                MouseController.volume_down()

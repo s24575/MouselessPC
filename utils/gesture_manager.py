@@ -7,34 +7,49 @@ import cv2
 
 from model.model import Model
 from utils.consts import Consts
-from utils.enums import MouseAction
+from utils.enums import Action, GestureMode, Gesture
 from utils.hand_gesture_image_collector import HandGestureImageCollector
 from utils.mouse_controller import MouseController
-from utils.utils import HandGesture
+from utils.utils import HandGestureAction
 
 
 class GestureManager:
     data_dir = "model/data/images"
 
     def __init__(self):
-        self.hand_gestures: List[HandGesture] = []
+        self.hand_gestures: List[HandGestureAction] = []
         self.screen_width, self.screen_height = MouseController.get_screen_size()
         self.model = Model(self.hand_gestures)
         self.previous_gesture_name = None
+        self.mode = GestureMode.DEFAULT
+        self.initial_sound_mode_position_y = 0
 
     def activate(self, hand_landmarks, normalized_position):
         hand_gesture, chance = self.model.predict(hand_landmarks)
 
-        x, y = MouseController.calculate_mouse_position(normalized_position.x, normalized_position.y,
-                                                        self.screen_width, self.screen_height)
-        MouseController.move_to(x, y)
-
         minimum_certainty = 0.80
-        if self.previous_gesture_name != hand_gesture.name and chance > minimum_certainty:
-            MouseController.execute_mouse_action(hand_gesture.action)
+        if chance > minimum_certainty:
+            x, y = MouseController.calculate_mouse_position(normalized_position.x, normalized_position.y,
+                                                            self.screen_width, self.screen_height)
+
+            self.handle_gesture(hand_gesture, x, y)
             self.previous_gesture_name = hand_gesture.name
 
         return hand_gesture.name
+
+    def handle_gesture(self, hand_gesture: HandGestureAction, x: int, y: int):
+        if self.mode == GestureMode.DEFAULT:
+            if hand_gesture.action == Action.SWITCH_TO_SOUND_MODE:
+                self.mode = GestureMode.SOUND
+            else:
+                MouseController.move_to(x, y)
+                if self.previous_gesture_name != hand_gesture.name:
+                    MouseController.execute_mouse_action(hand_gesture.action)
+        elif self.mode == GestureMode.SOUND:
+            if hand_gesture.action == Action.DEFAULT:
+                self.mode = GestureMode.DEFAULT
+            else:
+                MouseController.execute_mouse_action(hand_gesture.action)
 
     def collect_gesture_images(self, samples: int) -> bool:
         image_collector = HandGestureImageCollector()
@@ -74,6 +89,6 @@ class GestureManager:
             writer.writerow([gesture_index, *landmark_list])
         return
 
-    def add_gesture(self, name: str, action: MouseAction):
-        gesture = HandGesture(name, action)
-        self.hand_gestures.append(gesture)
+    def add_gesture_action(self, gesture: Gesture, action: Action):
+        gesture_action = HandGestureAction(str(gesture), action)
+        self.hand_gestures.append(gesture_action)

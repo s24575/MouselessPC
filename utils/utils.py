@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
-from utils.enums import MouseAction
+from utils.enums import Action
 
 
 @dataclass
-class HandGesture:
+class HandGestureAction:
     name: str
-    action: MouseAction
+    action: Action
