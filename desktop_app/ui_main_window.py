@@ -11,9 +11,9 @@ from desktop_app.video_thread import VideoThread
 
 
 class UiMainFrame(QMainWindow):
-    def __init__(self, model):
+    def __init__(self, gesture_manager):
         super().__init__()
-        self.model = model
+        self.gesture_manager = gesture_manager
         self.setup_ui()
         self.settings_window = None
         self.last_gesture = None
@@ -38,7 +38,7 @@ class UiMainFrame(QMainWindow):
         self.vbox = vbox
         self.vbox.setGeometry(QRect(30, 30, 480, 270))
 
-        self.video_thread = VideoThread(self.model)
+        self.video_thread = VideoThread(self.gesture_manager)
         self.video_thread.change_pixmap_signal.connect(self.update_image)
         self.video_thread.gesture_signal.connect(self.add_to_log)
         self.video_thread.start()

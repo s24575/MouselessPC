@@ -8,7 +8,7 @@ from utils.enums import MouseAction
 
 class MouseController:
     @staticmethod
-    def get_screen_width_and_height() -> Tuple[int, int]:
+    def get_screen_size() -> Tuple[int, int]:
         size = pyautogui.size()
         return size.width, size.height
 

@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 
 from utils.consts import Consts
-from utils.gesture_manager import HandGesture
+from utils.utils import HandGesture
 
 
 class Model:
