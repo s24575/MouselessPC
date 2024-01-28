@@ -5,14 +5,14 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 
 from utils.consts import Consts
-from utils.gesture_manager import HandGesture
+from utils.utils import HandGestureAction
 
 
 class Model:
     MODEL_SAVE_PATH = 'model/keypoint_classifier/keypoint_classifier.hdf5'
     MODEL_TFLITE_SAVE_PATH = 'model/keypoint_classifier/keypoint_classifier.tflite'
 
-    def __init__(self, hand_gestures: List[HandGesture],
+    def __init__(self, hand_gestures: List[HandGestureAction],
                  dataset_path: str = Consts.LANDMARKS_PATH,
                  num_threads=1):
         self.hand_gestures = hand_gestures
@@ -81,7 +81,7 @@ class Model:
 
         open(self.MODEL_TFLITE_SAVE_PATH, 'wb').write(tflite_quantized_model)
 
-    def predict(self, landmark_list) -> Tuple[HandGesture, float]:
+    def predict(self, landmark_list) -> Tuple[HandGestureAction, float]:
         input_details_tensor_index = self.input_details[0]['index']
         self.interpreter.set_tensor(
             input_details_tensor_index,
