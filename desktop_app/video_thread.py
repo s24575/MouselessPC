@@ -32,6 +32,7 @@ class VideoThread(QThread):
                 continue
             image = cv2.flip(image, 1)
             self.change_pixmap_signal.emit(image)
+
             if self.process_gestures:
                 hand_landmarks, main_landmark_position = self.image_collector.get_landmark_positions(image)
                 if hand_landmarks is not None:
@@ -39,6 +40,7 @@ class VideoThread(QThread):
                     self.gesture_signal.emit(gesture)
 
     def activate(self, hand_landmarks, normalized_position):
+
         hand_gesture, chance = self.model.predict(hand_landmarks)
         x, y = MouseController.calculate_mouse_position(normalized_position.x, normalized_position.y,
                                                         self.screen_width, self.screen_height)
@@ -50,3 +52,6 @@ class VideoThread(QThread):
             self.previous_gesture_name = hand_gesture.name
 
         return hand_gesture.name
+
+    def change_video_source(self, url):
+        self.image_collector.camera = url
