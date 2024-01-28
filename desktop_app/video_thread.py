@@ -1,9 +1,12 @@
+from typing import Tuple
+
 import cv2
 import numpy as np
 from PySide6.QtCore import QThread, Signal
 import time
 
 from model.model import Model
+from utils.consts import Consts
 from utils.hand_gesture_image_collector import HandGestureImageCollector
 from utils.mouse_controller import MouseController
 
@@ -29,21 +32,23 @@ class VideoThread(QThread):
                 continue
             image = cv2.flip(image, 1)
             self.change_pixmap_signal.emit(image)
-            hand_landmarks, main_landmark_position = self.image_collector.get_landmark_positions(image)
-            if self.process_gestures and hand_landmarks is not None:
-                gesture = self.activate(hand_landmarks, main_landmark_position)
-                self.gesture_signal.emit(gesture)
 
-    def activate(self, hand_landmarks, main_landmark_position):
+            if self.process_gestures:
+                hand_landmarks, main_landmark_position = self.image_collector.get_landmark_positions(image)
+                if hand_landmarks is not None:
+                    gesture = self.activate(hand_landmarks, main_landmark_position)
+                    self.gesture_signal.emit(gesture)
+
+    def activate(self, hand_landmarks, normalized_position):
+
         hand_gesture, chance = self.model.predict(hand_landmarks)
-        print(hand_gesture, chance)
-        x_norm, y_norm = main_landmark_position.x, main_landmark_position.y
-        x, y = x_norm * self.screen_width, y_norm * self.screen_height
+        x, y = MouseController.calculate_mouse_position(normalized_position.x, normalized_position.y,
+                                                        self.screen_width, self.screen_height)
         MouseController.move_to(x, y)
 
-        if self.previous_gesture_name != hand_gesture.name and chance > 0.80:
+        minimum_certainty = 0.80
+        if self.previous_gesture_name != hand_gesture.name and chance > minimum_certainty:
             MouseController.execute_mouse_action(hand_gesture.action)
-
             self.previous_gesture_name = hand_gesture.name
 
         return hand_gesture.name

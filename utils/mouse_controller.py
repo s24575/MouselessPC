@@ -2,6 +2,7 @@ from typing import Tuple
 
 import pyautogui
 
+from utils.consts import Consts
 from utils.enums import MouseAction
 
 
@@ -43,6 +44,16 @@ class MouseController:
     @staticmethod
     def move_relative(x: int, y: int, duration: int = 0.1):
         pyautogui.moveRel(x, y, duration=duration)
+
+    @staticmethod
+    def calculate_mouse_position(normalized_x: int, normalized_y: int,
+                                 screen_width: int, screen_height: int,
+                                 margin: int = Consts.SCREEN_MARGIN) -> Tuple[int, int]:
+        # Calculate position in the inner rectangle's coordinate system
+        x = normalized_x * (screen_width + 2 * margin) - margin
+        y = normalized_y * (screen_height + 2 * margin) - margin
+
+        return x, y
 
     @staticmethod
     def execute_mouse_action(mouse_action: MouseAction):

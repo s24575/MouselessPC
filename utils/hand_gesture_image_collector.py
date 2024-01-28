@@ -18,7 +18,6 @@ class HandGestureImageCollector:
         self._camera = Camera()
         self.mp_hands = mp.solutions.hands
         self._hands = self.mp_hands.Hands(max_num_hands=1)
-        # self._detector = HandDetector(maxHands=1)
 
     def __del__(self):
         cv2.destroyAllWindows()
@@ -112,21 +111,6 @@ class HandGestureImageCollector:
         landmark_list = list(map(normalize_, landmark_list))
 
         return landmark_list
-
-    # def get_image_and_hand_image(self) -> Tuple[Any, Any, Tuple[float, float]]:
-    #     img, hand_img, normalized_position = None, None, None
-    #     success, img = self._camera.get_current_image()
-    #     if success:
-    #         img = cv2.flip(img, 1)
-    #         hands, img = self._detector.findHands(img, flipType=False)
-    #         if hands:
-    #             hand = hands[0]
-    #             hand_img = self.get_hand_image(hand, img, self._img_size, 15)
-    #             if hand_img is not None:
-    #                 img_width, img_height, _ = img.shape
-    #                 normalized_position = self.get_normalized_position(hand, img_width, img_height)
-    #
-    #     return img, hand_img, normalized_position
     
     @staticmethod
     def get_hand_image(hand, img, img_size: int, padding: int = 0):
@@ -165,9 +149,3 @@ class HandGestureImageCollector:
         x2 = min(hand_x + hand_width + padding, img_width)
         y2 = min(hand_y + hand_height + padding, img_height)
         return x1, x2, y1, y2
-
-    @staticmethod
-    def get_normalized_position(main_landmark_position, img_width: int, img_height: int) -> Tuple[float, float]:
-        x_norm = main_landmark_position.x / img_width
-        y_norm = main_landmark_position.y / img_height
-        return x_norm, y_norm
