@@ -1,12 +1,12 @@
 import 'package:camera/camera.dart';
-import 'package:coolapp/http_server_connection.dart';
 import 'package:flutter/material.dart';
+import 'package:coolapp/http_server_connection.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({
-    super.key,
+    Key? key,
     required this.cameras,
-  });
+  }) : super(key: key);
 
   final List<CameraDescription>? cameras;
 
@@ -18,14 +18,18 @@ class CameraScreenState extends State<CameraScreen> {
   late CameraController _controller;
   bool _isRearCameraSelected = true;
 
+
   @override
   void initState() {
     super.initState();
-    initCamera(widget.cameras![0]);
+    if (widget.cameras != null && widget.cameras!.isNotEmpty) {
+      initCamera(widget.cameras![0]);
+    }
   }
 
-  Future initCamera(CameraDescription cameraDescription) async {
-    _controller = CameraController(cameraDescription, ResolutionPreset.high);
+
+  Future<void> initCamera(CameraDescription cameraDescription) async {
+    _controller = CameraController(cameraDescription, ResolutionPreset.medium);
     try {
       await _controller.initialize().then((_) {
         if (!mounted) return;
@@ -44,38 +48,51 @@ class CameraScreenState extends State<CameraScreen> {
 
   @override
   Widget build(BuildContext context) {
+    HttpServerConnection httpServer = HttpServerConnection(_controller);
+    httpServer.startServer();
+    final mediaSize = MediaQuery.of(context).size;
+      final scale = _controller.value.isInitialized
+      ? 1 / (_controller.value.aspectRatio * mediaSize.aspectRatio)
+      : 1.0; // Set default scale if not initialized
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.deepOrange,
-          title: const Text('Second Route'),
-        ),
-        body: Stack(
-          children: [
-            (_controller.value.isInitialized)
-                ? CameraPreview(_controller)
-                : Container(
-                    color: Colors.black,
-                    child: const Center(child: CircularProgressIndicator())),
-            GestureDetector(
-              onTap: () {
-                setState(() => _isRearCameraSelected = !_isRearCameraSelected);
-                initCamera(widget.cameras![_isRearCameraSelected ? 0 : 1]);
-              },
-              child:
-                  button(Icons.flip_camera_ios_outlined, Alignment.bottomLeft),
-            ),
-            GestureDetector(
-              onTap: () {
-                HttpServerConnection httpServer =
-                    HttpServerConnection(_controller);
-                httpServer.startServer();
-              },
-              child: button(Icons.cast, Alignment.bottomRight),
-            ),
-          ],
-        )
-        );
+      body: Stack(
+        children: [
+          _controller.value.isInitialized
+                ? ClipRect(
+                    clipper: _MediaSizeClipper(mediaSize),
+                    child: Transform.scale(
+                      scale: scale,
+                      alignment: Alignment.topCenter,
+                      child: CameraPreview(_controller),
+                    ),
+                  )
+              : Container(
+                  color: Colors.black,
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+          GestureDetector(
+            onTap: () {
+              setState(() =>
+                  _isRearCameraSelected = !_isRearCameraSelected);
+              initCamera(widget.cameras![_isRearCameraSelected ? 0 : 1]);
+            },
+            child: button(Icons.flip_camera_ios_outlined, Alignment.bottomLeft),
+          ),
+          // GestureDetector(
+          //   onTap: () {
+          //     HttpServerConnection httpServer =
+          //         HttpServerConnection(_controller);
+          //     httpServer.startServer();
+          //   },
+          //   child: button(Icons.cast, Alignment.bottomRight),
+          // ),
+        ],
+      ),
+    );
   }
+
+
+
 
   Widget button(IconData icon, Alignment alignment) {
     return Align(
@@ -106,5 +123,18 @@ class CameraScreenState extends State<CameraScreen> {
         ),
       ),
     );
+  }
+}
+  
+class _MediaSizeClipper extends CustomClipper<Rect> {
+  final Size mediaSize;
+  const _MediaSizeClipper(this.mediaSize);
+  @override
+  Rect getClip(Size size) {
+    return Rect.fromLTWH(0, 0, mediaSize.width, mediaSize.height);
+  }
+  @override
+  bool shouldReclip(CustomClipper<Rect> oldClipper) {
+    return true;
   }
 }
