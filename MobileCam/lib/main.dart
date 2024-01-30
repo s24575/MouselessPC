@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -31,19 +32,31 @@ class App extends StatelessWidget {
                 } else if (snapshot.hasError) {
                   return Text('Error: ${snapshot.error}');
                 } else {
-                  return Text(
-                    'Connected to IP: ${snapshot.data ?? 'N/A'}',
-                    style: const TextStyle(fontSize: 18),
-                  );
+                  return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Connected to IP: ${snapshot.data ?? 'N/A'}',
+                      style: const TextStyle(fontSize: 18, color: Colors.white),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text('Port: 4545', style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ],
+                );
                 }
-              },
-            ))));
+                }),
+                ),
+            backgroundColor: Colors.black,
+            ));
+            
   }
 
   AppBar appBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.deepOrange,
-      title: const Text("Shiiet!"),
+      backgroundColor: Colors.black,
+      title: const Text("MobileCam"),
+      titleTextStyle: const TextStyle(color: Colors.white,  fontSize: 22),
       centerTitle: true,
       actions: [
         GestureDetector(
@@ -59,16 +72,18 @@ class App extends StatelessWidget {
               alignment: Alignment.center,
               width: 40,
               decoration: BoxDecoration(
-                  color: Colors.deepOrange,
+                  color: Colors.black,
                   borderRadius: BorderRadius.circular(10)),
               child: SvgPicture.asset(
                 'assets/icons/camera_icon.svg',
                 height: 30,
                 width: 30,
+                color: Colors.white,
               ),
             ))
       ],
     );
+
   }
 
   Future<String?> fetchIpAddress() async {
